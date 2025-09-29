@@ -23,39 +23,152 @@
         
       </div>
       <script>
-       function editNote(note) {
-        const newTitle = prompt("Edit title:", note.title);
-        if (newTitle !== null && newTitle.trim() !== "") {
-        note.title = newTitle.trim();
+        let notes = [
+          {
+            id: 1,
+            title: "Social Media",
+            content:
+              "- Plan social content\n- Build content calendar\n- Plan promotion and distribution",
+            color: "note-yellow",
+          },
+          {
+            id: 2,
+            title: "Content Strategy",
+            content:
+              "Would need time to get insights (goals, personas, budget, audits), but after, it would be good to focus on assembling my team (start with SEO specialist, then perhaps an email marketer?). Also need to brainstorm on tooling.",
+            color: "note-blue",
+          },
+          {
+            id: 3,
+            title: "Email A/B Tests",
+            content: "- Subject lines\n- Sender\n- CTA\n- Sending times",
+            color: "note-pink",
+          },
+          {
+            id: 4,
+            title: "Banner Ads",
+            content:
+              "Notes from the workshop:\n- Sizing matters\n- Choose distinctive imagery\n- The landing page must match the display ad",
+            color: "note-orange",
+          },
+        ];
 
-        const newContent = prompt("Edit content:", note.content);
-        if (newContent !== null) {
-        note.content = newContent;
+        function renderNotes() {
+          const wall = document.getElementById("stickyWall");
+          const searchTerm = document
+            .getElementById("searchBox")
+            .value.toLowerCase();
+
+          // Filter notes based on search
+          const filteredNotes = notes.filter(
+            (note) =>
+              note.title.toLowerCase().includes(searchTerm) ||
+              note.content.toLowerCase().includes(searchTerm)
+          );
+
+          wall.innerHTML = "";
+
+          // Render filtered notes
+          filteredNotes.forEach((note) => {
+            const noteDiv = document.createElement("div");
+            noteDiv.className = `sticky-note ${note.color}`;
+
+            const formattedContent = note.content.replace(/\n/g, "<br>");
+
+            noteDiv.innerHTML = `
+                        <button class="delete-btn" onclick="deleteNote(${note.id})">×</button>
+                        <div class="note-title">${note.title}</div>
+                        <div class="note-content">${formattedContent}</div>
+                    `;
+
+            noteDiv.onclick = (e) => {
+              if (e.target.className !== "delete-btn") {
+                editNote(note);
+              }
+            };
+
+            wall.appendChild(noteDiv);
+          });
+
+          // Add the "+" button
+          const addButton = document.createElement("div");
+          addButton.className = "add-note";
+          addButton.textContent = "+";
+          addButton.onclick = openForm;
+          wall.appendChild(addButton);
         }
 
-        renderNotes();
+        function editNote(note) {
+          const newTitle = prompt("Edit title:", note.title);
+          if (newTitle !== null && newTitle.trim() !== "") {
+            note.title = newTitle.trim();
+
+            const newContent = prompt("Edit content:", note.content);
+            if (newContent !== null) {
+              note.content = newContent;
+            }
+
+            renderNotes();
+          }
         }
-      }
 
-  function deleteNote(id) {
-    if (confirm("Are you sure you want to delete this note?")) {
-      notes = notes.filter((note) => note.id !== id);
-      renderNotes();
-    }
-  }
+        function deleteNote(id) {
+          if (confirm("Are you sure you want to delete this note?")) {
+            notes = notes.filter((note) => note.id !== id);
+            renderNotes();
+          }
+        }
 
-  function filterNotes() {
-    renderNotes();
-  }
-
-  // Close form when clicking outside
-  document.getElementById("addForm").onclick = function (e) {
-    if (e.target === this) {
-      closeForm();
-    }
-  };
-
-  // Initialize
+        function filterNotes() {
           renderNotes();
+        }
+
+        // Close form when clicking outside
+        document.getElementById("addForm").onclick = function (e) {
+          if (e.target === this) {
+            closeForm();
+          }
+        };
+
+        function openForm() {
+          document.getElementById("addForm").style.display = "flex";
+        }
+
+        function closeForm() {
+          document.getElementById("addForm").style.display = "none";
+          clearForm();
+        }
+
+        function clearForm() {
+          document.getElementById("noteTitle").value = "";
+          document.getElementById("noteContent").value = "";
+          document.getElementById("noteColor").value = "note-yellow";
+        }
+
+        function saveNote() {
+          const title = document.getElementById("noteTitle").value;
+          const content = document.getElementById("noteContent").value;
+          const color = document.getElementById("noteColor").value;
+
+          if (title.trim() && content.trim()) {
+            const newNote = {
+              id: Date.now(),
+              title: title.trim(),
+              content: content.trim(),
+              color: color,
+            };
+
+            notes.unshift(newNote);
+            renderNotes();
+            closeForm();
+          } else {
+            alert("Please fill in both title and content");
+          }
+        }
+
+        // Initialize
+        renderNotes();
       </script>
-    </div>
+    </div>     
+  </body>
+</html>
