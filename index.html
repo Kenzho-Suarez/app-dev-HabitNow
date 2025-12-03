@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HabitNow - Dashboard</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="sidebar">
+      <div class="menu-header">
+        Menu
+        <span class="menu-icon">☰</span>
+      </div>
+
+      <input type="text" class="search-box" placeholder="Search" />
+
+      <div class="nav-section">
+        <div class="nav-title">TASKS</div>
+        <a href="index.html" class="nav-item active">
+          <span class="nav-icon">🏠</span>
+          Home
+        </a>
+        <a href="upcoming.html" class="nav-item">
+          <span class="nav-icon">📋</span>
+          Upcoming
+          <span
+            class="nav-count"
+            id="upcoming-count"
+            style="display: none"
+          ></span>
+        </a>
+        <a href="today.html" class="nav-item">
+          <span class="nav-icon">📅</span>
+          Today
+          <span class="nav-count" id="today-count" style="display: none"></span>
+        </a>
+        <a href="calendar.html" class="nav-item">
+          <span class="nav-icon">📅</span>
+          Calendar
+        </a>
+        <a href="sticky-wall.html" class="nav-item">
+          <span class="nav-icon">📝</span>
+          Sticky Wall
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-title">MANAGE</div>
+        <a href="lists.html" class="nav-item">
+          <span class="nav-icon">📚</span>
+          Lists
+        </a>
+        <a href="tags.html" class="nav-item">
+          <span class="nav-icon">🏷️</span>
+          Tags
+        </a>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="content-header">
+        <div>
+          <h1 class="page-title">Welcome back! 👋</h1>
+          <p style="color: #666; margin-top: 8px" id="current-date"></p>
+        </div>
+        <button class="add-btn" onclick="showQuickAdd()">Quick Add +</button>
+      </div>
+
+      <!-- Stats Overview -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background: #e3f2fd">📋</div>
+          <div class="stat-content">
+            <p class="stat-label">Total Tasks</p>
+            <h2 class="stat-value" id="total-tasks">0</h2>
+            <p class="stat-change" id="tasks-change">No tasks yet</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon" style="background: #f3e5f5">✅</div>
+          <div class="stat-content">
+            <p class="stat-label">Completed</p>
+            <h2 class="stat-value" id="completed-tasks">0</h2>
+            <p class="stat-change" id="completion-rate">0% completion</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon" style="background: #fff3e0">📝</div>
+          <div class="stat-content">
+            <p class="stat-label">Sticky Notes</p>
+            <h2 class="stat-value" id="total-notes">0</h2>
+            <p class="stat-change" id="notes-change">No notes yet</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon" style="background: #e8f5e9">🎯</div>
+          <div class="stat-content">
+            <p class="stat-label">Active Lists</p>
+            <h2 class="stat-value" id="active-lists">0</h2>
+            <p class="stat-change" id="lists-change">No lists yet</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Today's Focus -->
+      <div class="dashboard-section">
+        <div class="section-header">
+          <h2>Today's Focus</h2>
+          <a href="today.html" class="view-all-link">View all →</a>
+        </div>
+        <div class="focus-cards" id="today-focus">
+          <div class="empty-state">
+            <p>No tasks scheduled for today. Add some tasks to get started!</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Two Column Layout -->
+      <div class="dashboard-columns">
+        <!-- Calendar Preview -->
+        <div class="dashboard-section">
+          <div class="section-header">
+            <h2>This Week</h2>
+            <a href="calendar.html" class="view-all-link">Open calendar →</a>
+          </div>
+          <div class="mini-calendar" id="week-preview"></div>
+        </div>
+
+        <!-- Recent Notes -->
+        <div class="dashboard-section">
+          <div class="section-header">
+            <h2>Recent Notes</h2>
+            <a href="sticky-wall.html" class="view-all-link">View all →</a>
+          </div>
+          <div class="recent-notes" id="recent-notes">
+            <div class="empty-state">
+              <p>No notes yet. Create your first note!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <h3 style="margin-bottom: 15px; color: #333">Quick Actions</h3>
+        <div class="action-buttons">
+          <button class="action-button" onclick="addTask()">
+            <span class="action-icon">📋</span>
+            <span>Add Task</span>
+          </button>
+          <button class="action-button" onclick="addNote()">
+            <span class="action-icon">📝</span>
+            <span>New Note</span>
+          </button>
+          <button class="action-button" onclick="scheduleEvent()">
+            <span class="action-icon">📅</span>
+            <span>Schedule Event</span>
+          </button>
+          <button class="action-button" onclick="createList()">
+            <span class="action-icon">📚</span>
+            <span>Create List</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="dashboard.js"></script>
+    <script src="task-counter.js"></script>
+  </body>
+</html>

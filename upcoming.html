@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Upcoming - HabitNow</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="sidebar">
+      <div class="menu-header">
+        Menu
+        <span class="menu-icon">☰</span>
+      </div>
+
+      <input type="text" class="search-box" placeholder="Search" />
+
+      <div class="nav-section">
+        <div class="nav-title">TASKS</div>
+        <a href="index.html" class="nav-item">
+          <span class="nav-icon">🏠</span>
+          Home
+        </a>
+        <a href="upcoming.html" class="nav-item active">
+          <span class="nav-icon">📋</span>
+          Upcoming
+          <span
+            class="nav-count"
+            id="upcoming-count"
+            style="display: none"
+          ></span>
+        </a>
+        <a href="today.html" class="nav-item">
+          <span class="nav-icon">📅</span>
+          Today
+          <span class="nav-count" id="today-count" style="display: none"></span>
+        </a>
+        <a href="calendar.html" class="nav-item">
+          <span class="nav-icon">📅</span>
+          Calendar
+        </a>
+        <a href="sticky-wall.html" class="nav-item">
+          <span class="nav-icon">📝</span>
+          Sticky Wall
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-title">MANAGE</div>
+        <a href="lists.html" class="nav-item">
+          <span class="nav-icon">📚</span>
+          Lists
+        </a>
+        <a href="tags.html" class="nav-item">
+          <span class="nav-icon">🏷️</span>
+          Tags
+        </a>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="content-header">
+        <h1 class="page-title">📋 Upcoming Tasks</h1>
+        <button class="add-btn">Add Event</button>
+      </div>
+
+      <div class="upcoming-filters">
+        <button class="filter-btn active">All</button>
+        <button class="filter-btn">Work</button>
+        <button class="filter-btn">Personal</button>
+      </div>
+
+      <div class="upcoming-list">
+        <p style="text-align: center; color: #999; padding: 40px">
+          No upcoming events to display
+        </p>
+      </div>
+    </div>
+    <script src="task-counter.js"></script>
+  </body>
+</html>
