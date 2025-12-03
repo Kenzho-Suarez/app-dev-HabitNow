@@ -589,6 +589,7 @@ body {
   transform: translateY(-2px);
 }
 
+<<<<<<< HEAD
 .note-yellow {
   background: #fff9c4;
 }
@@ -604,6 +605,14 @@ body {
 .note-orange {
   background: #ffeaa7;
 }
+=======
+.note-yellow { background: #fff9c4; }
+.note-blue   { background: #d1ecf1; }
+.note-pink   { background: #f8d7da; }
+.note-orange { background: #ffeaa7; }
+.note-green  { background: #d4edda; }
+.note-purple { background: #e2d6f3; }
+>>>>>>> 31f854cb13a5656a353111d703e5103270767b38
 
 .add-note {
   background: #e9ecef;

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calendar Component</title>
+    <link rel="stylesheet" href="style2.css" />
+  </head>
+  <body>
+    <div class="calendar-container">
+      <div class="content-header">
+        <h1 class="page-title" id="pageTitle">16 February 2022</h1>
+        <button class="add-btn" onclick="toggleAddForm()">Add Event</button>
+      </div>
+
+      <div class="calendar-nav">
+        <button class="nav-btn active">Day</button>
+        <button class="nav-btn">Week</button>
+        <button class="nav-btn">Month</button>
+        <div style="margin-left: auto">
+          <button class="date-nav" onclick="changeDate(-1)">‹</button>
+          <button class="date-nav" onclick="changeDate(1)">›</button>
+        </div>
+      </div>
+
+      <div class="add-event-form" id="addEventForm">
+        <div class="form-row">
+          <input
+            type="text"
+            class="form-input title"
+            placeholder="Event title"
+            id="eventTitle"
+          />
+          <input
+            type="time"
+            class="form-input time"
+            id="eventTime"
+            value="09:00"
+          />
+          <select class="form-select" id="eventType">
+            <option value="work">Work</option>
+            <option value="personal">Personal</option>
+          </select>
+        </div>
+        <div class="form-buttons">
+          <button class="btn-save" onclick="addEvent()">Save</button>
+          <button class="btn-cancel" onclick="toggleAddForm()">Cancel</button>
+        </div>
+      </div>
+
+      <div class="calendar-day">
+        <div class="day-header">WEDNESDAY</div>
+        <div id="timeSlots"></div>
+      </div>
+    </div>
+
+    <script>
+      let currentDate = new Date(2022, 1, 16); // February 16, 2022
+      let events = [
+        { time: "09:00", title: "Session 1: Marketing Sprint", type: "work" },
+        { time: "10:00", title: "Sales Catchup", type: "work" },
+        { time: "11:00", title: "Renew driver's license", type: "personal" },
+      ];
+
+      function generateTimeSlots() {
+        const container = document.getElementById("timeSlots");
+        container.innerHTML = "";
+
+        for (let hour = 9; hour <= 17; hour++) {
+          const timeString = hour.toString().padStart(2, "0") + ":00";
+          const event = events.find((e) => e.time === timeString);
+
+          const timeSlot = document.createElement("div");
+          timeSlot.className = "time-slot";
+
+          const timeLabel = document.createElement("div");
+          timeLabel.className = "time-label";
+          timeLabel.innerHTML = `${timeString}<br>${hour >= 12 ? "PM" : "AM"}`;
+
+          timeSlot.appendChild(timeLabel);
+
+          if (event) {
+            const eventBlock = document.createElement("div");
+            eventBlock.className = `event-block event-${event.type}`;
+            eventBlock.textContent = event.title;
+            eventBlock.onclick = () => editEvent(event);
+            timeSlot.appendChild(eventBlock);
+          } else {
+            const emptySlot = document.createElement("div");
+            emptySlot.className = "empty-slot";
+            timeSlot.appendChild(emptySlot);
+          }
+
+          container.appendChild(timeSlot);
+        }
+      }
+
+      function changeDate(direction) {
+        currentDate.setDate(currentDate.getDate() + direction);
+        updatePageTitle();
+      }
+
+      function updatePageTitle() {
+        const options = { day: "numeric", month: "long", year: "numeric" };
+        document.getElementById("pageTitle").textContent =
+          currentDate.toLocaleDateString("en-US", options);
+
+        const dayNames = [
+          "SUNDAY",
+          "MONDAY",
+          "TUESDAY",
+          "WEDNESDAY",
+          "THURSDAY",
+          "FRIDAY",
+          "SATURDAY",
+        ];
+        document.querySelector(".day-header").textContent =
+          dayNames[currentDate.getDay()];
+      }
+
+      function toggleAddForm() {
+        const form = document.getElementById("addEventForm");
+        form.style.display =
+          form.style.display === "none" || form.style.display === ""
+            ? "block"
+            : "none";
+      }
+
+      function addEvent() {
+        const title = document.getElementById("eventTitle").value;
+        const time = document.getElementById("eventTime").value;
+        const type = document.getElementById("eventType").value;
+
+        if (title && time) {
+          events.push({ time, title, type });
+          generateTimeSlots();
+          toggleAddForm();
+
+          document.getElementById("eventTitle").value = "";
+          document.getElementById("eventTime").value = "09:00";
+        }
+      }
+
+      function editEvent(event) {
+        const newTitle = prompt("Edit event:", event.title);
+        if (newTitle !== null && newTitle.trim() !== "") {
+          event.title = newTitle.trim();
+          generateTimeSlots();
+        }
+      }
+
+      generateTimeSlots();
+      updatePageTitle();
+    </script>
+  </body>
+</html>
