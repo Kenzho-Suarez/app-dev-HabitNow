@@ -1,45 +1,11 @@
-// Dashboard functionality for index.html
-
-// Initialize data from localStorage
-function getData(key, defaultValue = []) {
-  const data = localStorage.getItem(key);
-  return data ? JSON.parse(data) : defaultValue;
-}
-
-function saveData(key, data) {
-  localStorage.setItem(key, JSON.stringify(data));
-}
-
-// Format date
-function formatDate(date) {
-  const options = {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  };
-  return date.toLocaleDateString("en-US", options);
-}
-
-// Get relative time
-function getRelativeTime(date) {
-  const now = new Date();
-  const diff = now - new Date(date);
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  const days = Math.floor(hours / 24);
-
-  if (hours < 1) return "Just now";
-  if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
-  if (days === 1) return "Yesterday";
-  if (days < 7) return `${days} days ago`;
-  return new Date(date).toLocaleDateString();
-}
+// ===== DASHBOARD FUNCTIONALITY =====
+// Complete dashboard with real-time stats, quick actions, and data sync
 
 // Update dashboard stats
 function updateDashboard() {
-  const tasks = getData("tasks");
-  const notes = getData("notes");
-  const lists = getData("lists");
+  const tasks = getTasks();
+  const notes = getNotes();
+  const lists = getLists();
 
   // Current date
   const currentDateEl = document.getElementById("current-date");
@@ -48,18 +14,43 @@ function updateDashboard() {
   }
 
   // Tasks stats
-  const today = new Date().toDateString();
-  const todayTasks = tasks.filter(
-    (t) => new Date(t.date).toDateString() === today
-  );
+  const today = getTodayDate();
+  const todayTasks = tasks.filter((t) => isToday(t.date));
   const completedTasks = tasks.filter((t) => t.completed);
+  const upcomingTasks = tasks.filter((t) => !t.completed && isFuture(t.date));
 
+  // Update total tasks
   const totalTasksEl = document.getElementById("total-tasks");
   if (totalTasksEl) totalTasksEl.textContent = tasks.length;
 
+  // Update completed tasks
   const completedTasksEl = document.getElementById("completed-tasks");
   if (completedTasksEl) completedTasksEl.textContent = completedTasks.length;
 
+  // Update completion rate
+  const completionRateEl = document.getElementById("completion-rate");
+  if (completionRateEl) {
+    if (tasks.length > 0) {
+      const completionRate = Math.round(
+        (completedTasks.length / tasks.length) * 100
+      );
+      completionRateEl.textContent = `${completionRate}% completion`;
+    } else {
+      completionRateEl.textContent = "0% completion";
+    }
+  }
+
+  // Update tasks change stat
+  const tasksChangeEl = document.getElementById("tasks-change");
+  if (tasksChangeEl) {
+    if (tasks.length > 0) {
+      tasksChangeEl.textContent = `${todayTasks.length} due today`;
+    } else {
+      tasksChangeEl.textContent = "No tasks yet";
+    }
+  }
+
+  // Update today count badge
   const todayCountEl = document.getElementById("today-count");
   if (todayCountEl) {
     if (todayTasks.length > 0) {
@@ -70,36 +61,14 @@ function updateDashboard() {
     }
   }
 
+  // Update upcoming count badge
   const upcomingCountEl = document.getElementById("upcoming-count");
   if (upcomingCountEl) {
-    const upcomingCount = tasks.filter((t) => !t.completed).length;
-    if (upcomingCount > 0) {
-      upcomingCountEl.textContent = upcomingCount;
+    if (upcomingTasks.length > 0) {
+      upcomingCountEl.textContent = upcomingTasks.length;
       upcomingCountEl.style.display = "inline-block";
     } else {
       upcomingCountEl.style.display = "none";
-    }
-  }
-
-  // Update stat changes
-  const tasksChangeEl = document.getElementById("tasks-change");
-  if (tasksChangeEl) {
-    if (tasks.length > 0) {
-      tasksChangeEl.textContent = `${todayTasks.length} due today`;
-    } else {
-      tasksChangeEl.textContent = "No tasks yet";
-    }
-  }
-
-  const completionRateEl = document.getElementById("completion-rate");
-  if (completionRateEl) {
-    if (tasks.length > 0) {
-      const completionRate = Math.round(
-        (completedTasks.length / tasks.length) * 100
-      );
-      completionRateEl.textContent = `${completionRate}% completion`;
-    } else {
-      completionRateEl.textContent = "0% completion";
     }
   }
 
@@ -138,13 +107,9 @@ function updateDashboard() {
     }
   }
 
-  // Update today's focus
+  // Update sections
   renderTodayFocus(todayTasks);
-
-  // Update week preview
   renderWeekPreview(tasks);
-
-  // Update recent notes
   renderRecentNotes(notes);
 }
 
@@ -226,7 +191,7 @@ function renderWeekPreview(tasks) {
     .join("");
 }
 
-// Render recent notes
+// Render recent notes - FIXED
 function renderRecentNotes(notes) {
   const container = document.getElementById("recent-notes");
   if (!container) return;
@@ -250,19 +215,60 @@ function renderRecentNotes(notes) {
       (note) => `
     <div class="recent-note" style="background: ${
       note.color
-    };" onclick="window.location.href='sticky-wall.html'">
-      <h4>${note.title}</h4>
-      <p>${note.content}</p>
-      <span class="note-time">${getRelativeTime(note.createdAt)}</span>
+    }; cursor: pointer; position: relative;" onclick="openNoteFromDashboard('${
+        note.id
+      }')">
+      <h4 style="margin: 0 0 8px 0; font-size: 15px; font-weight: 600; color: #222;">${
+        note.title
+      }</h4>
+      <p style="margin: 0 0 10px 0; font-size: 13px; color: #444; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${
+        note.content
+      }</p>
+      <span class="note-time" style="font-size: 11px; color: #666;">${getRelativeTime(
+        note.createdAt
+      )}</span>
     </div>
   `
     )
     .join("");
 }
 
-// Quick action functions
+// Open note from dashboard - NEW
+function openNoteFromDashboard(noteId) {
+  sessionStorage.setItem("editNoteId", noteId);
+  window.location.href = "sticky-wall.html";
+}
+
+// Quick action functions - FIXED
 function showQuickAdd() {
-  alert("Quick add feature - Navigate to specific pages to add items");
+  let html = `
+    <div class="quick-add-modal-content">
+      <div class="quick-add-buttons">
+        <button class="quick-add-btn" onclick="addTask(); closeModal(document.querySelector('.modal.active'));">
+          <span class="quick-add-icon">📋</span>
+          <span>Add Task</span>
+        </button>
+        <button class="quick-add-btn" onclick="addNote(); closeModal(document.querySelector('.modal.active'));">
+          <span class="quick-add-icon">📝</span>
+          <span>New Note</span>
+        </button>
+        <button class="quick-add-btn" onclick="scheduleEvent(); closeModal(document.querySelector('.modal.active'));">
+          <span class="quick-add-icon">📅</span>
+          <span>Schedule Event</span>
+        </button>
+        <button class="quick-add-btn" onclick="createListPage(); closeModal(document.querySelector('.modal.active'));">
+          <span class="quick-add-icon">📚</span>
+          <span>Create List</span>
+        </button>
+      </div>
+    </div>
+  `;
+
+  createModal({
+    title: "Quick Add",
+    content: html,
+    closeOnBackground: true,
+  });
 }
 
 function addTask() {
@@ -277,9 +283,33 @@ function scheduleEvent() {
   window.location.href = "calendar.html";
 }
 
-function createList() {
+function createListPage() {
   window.location.href = "lists.html";
 }
 
-// Initialize dashboard on load
-document.addEventListener("DOMContentLoaded", updateDashboard);
+// ===== INITIALIZATION =====
+
+document.addEventListener("DOMContentLoaded", () => {
+  updateDashboard();
+
+  // Setup quick add button
+  const quickAddBtn = document.querySelector(".add-btn");
+  if (quickAddBtn) {
+    quickAddBtn.onclick = showQuickAdd;
+  }
+
+  // Ensure action buttons work
+  window.addTask = addTask;
+  window.addNote = addNote;
+  window.scheduleEvent = scheduleEvent;
+  window.createList = createListPage;
+  window.openNoteFromDashboard = openNoteFromDashboard;
+});
+
+// Listen for data updates from other pages
+window.addEventListener("dataUpdated", (e) => {
+  updateDashboard();
+});
+
+// Update dashboard periodically to reflect real-time changes
+setInterval(updateDashboard, 3000);

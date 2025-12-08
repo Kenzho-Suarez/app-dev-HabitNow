@@ -1,20 +1,31 @@
-// Calendar functionality for calendar.html
+// ===== CALENDAR FUNCTIONALITY =====
+// Manages calendar view with event creation, editing, viewing, and deletion
 
 let currentDate = new Date();
 let currentEventId = null;
 let selectedDate = null;
 
-// Initialize data
-function getTasks() {
-  const data = localStorage.getItem("tasks");
-  return data ? JSON.parse(data) : [];
-}
+// ===== INITIALIZATION =====
 
-function saveTasks(tasks) {
-  localStorage.setItem("tasks", JSON.stringify(tasks));
-}
+document.addEventListener("DOMContentLoaded", () => {
+  renderCalendar();
+  setupCalendarEventListeners();
+  updateTaskCounterBadges();
+});
 
-// Render calendar
+// Listen for updates from other pages
+window.addEventListener("dataUpdated", (e) => {
+  if (e.detail.key === "tasks") {
+    renderCalendar();
+    updateTaskCounterBadges();
+  }
+});
+
+// ===== RENDER CALENDAR =====
+
+/**
+ * Render the calendar view
+ */
 function renderCalendar() {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -82,7 +93,11 @@ function renderCalendar() {
         if (dayTasks.length > 0) {
           html += '<div class="calendar-events">';
           dayTasks.slice(0, 2).forEach((task) => {
-            html += `<div class="calendar-event ${task.type}" onclick="event.stopPropagation(); viewEvent('${task.id}')">${task.title}</div>`;
+            // FIXED: Only apply completed styles when task is actually completed
+            const completedStyle = task.completed
+              ? "text-decoration: line-through; opacity: 0.6;"
+              : "";
+            html += `<div class="calendar-event ${task.type}" onclick="event.stopPropagation(); viewEvent('${task.id}')" style="${completedStyle}">${task.title}</div>`;
           });
           if (dayTasks.length > 2) {
             html += `<div class="more-events" onclick="event.stopPropagation(); showAllEvents('${dateStr}')">+${
@@ -107,13 +122,20 @@ function renderCalendar() {
   }
 }
 
-// Change month
+/**
+ * Change month view
+ * @param {number} delta - Number of months to move (-1 for previous, 1 for next)
+ */
 function changeMonth(delta) {
   currentDate.setMonth(currentDate.getMonth() + delta);
   renderCalendar();
 }
 
-// Open add modal
+// ===== EVENT ACTIONS =====
+
+/**
+ * Open add modal for new event (generic date)
+ */
 function openAddModal() {
   currentEventId = null;
   const modalTitle = document.getElementById("modal-title");
@@ -124,7 +146,7 @@ function openAddModal() {
 
   const eventDate = document.getElementById("event-date");
   if (eventDate) {
-    eventDate.value = new Date().toISOString().split("T")[0];
+    eventDate.value = getTodayDate();
   }
 
   const deleteBtn = document.getElementById("delete-btn");
@@ -134,7 +156,10 @@ function openAddModal() {
   if (eventModal) eventModal.classList.add("active");
 }
 
-// Open add modal for specific date
+/**
+ * Open add modal for specific date
+ * @param {string} dateStr - Date in YYYY-MM-DD format
+ */
 function openAddModalForDate(dateStr) {
   selectedDate = dateStr;
   currentEventId = null;
@@ -154,25 +179,44 @@ function openAddModalForDate(dateStr) {
   if (eventModal) eventModal.classList.add("active");
 }
 
-// View event details
+/**
+ * View event details
+ * @param {string} id - Task ID to view
+ */
 function viewEvent(id) {
-  const tasks = getTasks();
-  const task = tasks.find((t) => t.id === id);
+  const task = getTask(id);
   if (!task) return;
 
   currentEventId = id;
   const html = `
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+      <input type="checkbox" ${
+        task.completed ? "checked" : ""
+      } onchange="toggleCalendarTaskCompletion('${id}')" style="width: 20px; height: 20px; cursor: pointer;" title="Mark as done" />
+      <label style="cursor: pointer; user-select: none; font-weight: 600; font-size: 16px; text-decoration: ${
+        task.completed ? "line-through" : "none"
+      }; opacity: ${task.completed ? "0.6" : "1"};">
+        ${task.completed ? "✓ Completed" : "Mark as Done"}
+      </label>
+    </div>
     <p><strong>Title:</strong> ${task.title}</p>
-    <p><strong>Date:</strong> ${new Date(task.date).toLocaleDateString()}</p>
+    <p><strong>Date:</strong> ${formatDate(task.date)}</p>
     ${task.time ? `<p><strong>Time:</strong> ${task.time}</p>` : ""}
     ${
       task.description
         ? `<p><strong>Description:</strong> ${task.description}</p>`
         : ""
     }
-    <p><strong>Type:</strong> <span style="text-transform: capitalize;">${
+    <p><strong>Type:</strong> <span style="text-transform: capitalize; color: ${getTypeColor(
       task.type
-    }</span></p>
+    )};">${task.type}</span></p>
+    ${
+      task.tags && task.tags.length > 0
+        ? `<p><strong>Tags:</strong> ${task.tags
+            .map((tagId) => `#${getTag(tagId)?.name || "unknown"}`)
+            .join(", ")}</p>`
+        : ""
+    }
   `;
   const eventDetails = document.getElementById("event-details");
   if (eventDetails) eventDetails.innerHTML = html;
@@ -181,11 +225,12 @@ function viewEvent(id) {
   if (viewModal) viewModal.classList.add("active");
 }
 
-// Edit event from view
+/**
+ * Edit event from view modal
+ */
 function editEventFromView() {
   closeViewModal();
-  const tasks = getTasks();
-  const task = tasks.find((t) => t.id === currentEventId);
+  const task = getTask(currentEventId);
   if (!task) return;
 
   const modalTitle = document.getElementById("modal-title");
@@ -213,73 +258,122 @@ function editEventFromView() {
   if (eventModal) eventModal.classList.add("active");
 }
 
-// Save event
+/**
+ * Save event (create or update)
+ * @param {Event} e - Form submit event
+ */
 function saveEvent(e) {
   e.preventDefault();
 
-  const task = {
-    id: currentEventId || "task_" + Date.now(),
-    title: document.getElementById("event-title").value,
-    description: document.getElementById("event-description").value,
-    date: document.getElementById("event-date").value,
-    time: document.getElementById("event-time").value,
-    type: document.getElementById("event-type").value,
-    completed: false,
-    createdAt: new Date().toISOString(),
-  };
+  const title = document.getElementById("event-title").value.trim();
+  const description = document.getElementById("event-description").value.trim();
+  const date = document.getElementById("event-date").value;
+  const time = document.getElementById("event-time").value;
+  const type = document.getElementById("event-type").value;
 
-  const tasks = getTasks();
-
-  if (currentEventId) {
-    const index = tasks.findIndex((t) => t.id === currentEventId);
-    if (index !== -1) {
-      tasks[index] = task;
-    }
-  } else {
-    tasks.push(task);
+  // Validate
+  if (!validateRequired(title)) {
+    showError("Please enter an event title");
+    return;
   }
 
-  saveTasks(tasks);
+  if (!date) {
+    showError("Please select a date");
+    return;
+  }
+
+  if (currentEventId) {
+    // Update existing event
+    updateTask(currentEventId, {
+      title,
+      description,
+      date,
+      time,
+      type,
+    });
+    showSuccess("Event updated successfully");
+  } else {
+    // Create new event
+    const newTask = createTask(title, date, {
+      description,
+      time,
+      type,
+    });
+    addTask(newTask);
+    showSuccess("Event created");
+  }
+
   closeModal();
   renderCalendar();
+  updateTaskCounterBadges();
 }
 
-// Delete event
+/**
+ * Toggle calendar task completion
+ * @param {string} taskId - Task ID to toggle
+ */
+function toggleCalendarTaskCompletion(taskId) {
+  const task = getTask(taskId);
+  if (!task) return;
+
+  updateTask(taskId, { completed: !task.completed });
+  showSuccess(task.completed ? "Task marked incomplete" : "Task completed!");
+  renderCalendar();
+  updateTaskCounterBadges();
+}
+
+/**
+ * Delete event
+ */
 function deleteEvent() {
-  if (!confirm("Are you sure you want to delete this event?")) return;
+  if (!currentEventId) return;
 
-  const tasks = getTasks();
-  const filtered = tasks.filter((t) => t.id !== currentEventId);
-  saveTasks(filtered);
-  closeModal();
-  renderCalendar();
+  if (window.confirm("Are you sure you want to delete this event?")) {
+    deleteTask(currentEventId);
+    showSuccess("Event deleted");
+    closeModal();
+    renderCalendar();
+    updateTaskCounterBadges();
+  }
 }
 
-// Delete event from view modal
+/**
+ * Delete event from view modal
+ */
 function deleteEventFromView() {
-  if (!confirm("Are you sure you want to delete this event?")) return;
+  if (!currentEventId) return;
 
-  const tasks = getTasks();
-  const filtered = tasks.filter((t) => t.id !== currentEventId);
-  saveTasks(filtered);
-  closeViewModal();
-  renderCalendar();
+  if (window.confirm("Are you sure you want to delete this event?")) {
+    deleteTask(currentEventId);
+    showSuccess("Event deleted");
+    closeViewModal();
+    renderCalendar();
+    updateTaskCounterBadges();
+  }
 }
 
-// Close modals
+/**
+ * Close add/edit modal
+ */
 function closeModal() {
   const eventModal = document.getElementById("event-modal");
   if (eventModal) eventModal.classList.remove("active");
   currentEventId = null;
 }
 
+/**
+ * Close view modal
+ */
 function closeViewModal() {
   const viewModal = document.getElementById("view-modal");
   if (viewModal) viewModal.classList.remove("active");
   currentEventId = null;
 }
 
-// Show all events for a day
+/**
+ * Show all events for a day
+ * @param {string} dateStr - Date in YYYY-MM-DD format
+ */
 function showAllEvents(dateStr) {
   const tasks = getTasks();
   const dayTasks = tasks.filter((t) => t.date === dateStr);
@@ -289,11 +383,28 @@ function showAllEvents(dateStr) {
   const html = dayTasks
     .map(
       (task) => `
-    <p style="margin: 8px 0; cursor: pointer; padding: 8px; background: #f8f9fa; border-radius: 4px;" 
-       onclick="viewEvent('${task.id}')">
-      <strong>${task.title}</strong><br>
-      <small>${task.time || "All day"} - ${task.type}</small>
-    </p>
+    <div style="margin: 12px 0; padding: 12px; background: #f8f9fa; border-radius: 6px; display: flex; align-items: center; gap: 10px; border-left: 4px solid ${getTypeColor(
+      task.type
+    )};">
+      <input type="checkbox" class="calendar-checkbox" ${
+        task.completed ? "checked" : ""
+      } onchange="event.stopPropagation(); toggleCalendarTaskCompletion('${
+        task.id
+      }')" style="cursor: pointer; width: 18px; height: 18px;" title="Mark as done" />
+      <p style="margin: 0; cursor: pointer; flex: 1; text-decoration: ${
+        task.completed ? "line-through" : "none"
+      }; opacity: ${task.completed ? "0.6" : "1"};" onclick="viewEvent('${
+        task.id
+      }')">
+        <strong>${task.title}</strong><br>
+        <small>${task.time || "All day"} - <span style="color: ${getTypeColor(
+        task.type
+      )};">${task.type}</span></small>
+      </p>
+      <button onclick="event.stopPropagation(); deleteCalendarEventFromList('${
+        task.id
+      }')" style="background: #ff6b6b; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500; transition: background 0.2s;" onmouseover="this.style.background='#ff5252'" onmouseout="this.style.background='#ff6b6b'" title="Delete task">Delete</button>
+    </div>
   `
     )
     .join("");
@@ -305,5 +416,96 @@ function showAllEvents(dateStr) {
   if (viewModal) viewModal.classList.add("active");
 }
 
-// Initialize
-document.addEventListener("DOMContentLoaded", renderCalendar);
+/**
+ * Delete event from all-events list
+ * @param {string} taskId - Task ID to delete
+ */
+function deleteCalendarEventFromList(taskId) {
+  const task = getTask(taskId);
+  if (!task) return;
+
+  if (window.confirm(`Delete task "${task.title}"?`)) {
+    deleteTask(taskId);
+    showSuccess("Task deleted");
+    renderCalendar();
+    updateTaskCounterBadges();
+    // Refresh the all-events modal
+    const dateStr = task.date;
+    showAllEvents(dateStr);
+  }
+}
+
+// ===== EVENT LISTENERS =====
+
+/**
+ * Setup calendar event listeners
+ */
+function setupCalendarEventListeners() {
+  const addBtn = document.querySelector(".add-btn");
+  if (addBtn) {
+    addBtn.onclick = openAddModal;
+  }
+
+  // Handle modal close with ESC key
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closeModal();
+      closeViewModal();
+    }
+  });
+
+  // Close modal when clicking background
+  const eventModal = document.getElementById("event-modal");
+  if (eventModal) {
+    eventModal.addEventListener("click", (e) => {
+      if (e.target === eventModal) {
+        closeModal();
+      }
+    });
+  }
+
+  const viewModal = document.getElementById("view-modal");
+  if (viewModal) {
+    viewModal.addEventListener("click", (e) => {
+      if (e.target === viewModal) {
+        closeViewModal();
+      }
+    });
+  }
+}
+
+// ===== TASK COUNTER =====
+
+/**
+ * Update task counter badges in navigation
+ */
+function updateTaskCounterBadges() {
+  const tasks = getTasks();
+
+  // Update today count
+  const todayTasks = tasks.filter((t) => isToday(t.date));
+  const todayCountEl = document.getElementById("today-count");
+  if (todayCountEl) {
+    if (todayTasks.length > 0) {
+      todayCountEl.textContent = todayTasks.length;
+      todayCountEl.style.display = "inline-block";
+    } else {
+      todayCountEl.style.display = "none";
+    }
+  }
+
+  // Update upcoming count (uncompleted future tasks)
+  const upcomingTasks = tasks.filter((t) => !t.completed && isFuture(t.date));
+  const upcomingCountEl = document.getElementById("upcoming-count");
+  if (upcomingCountEl) {
+    if (upcomingTasks.length > 0) {
+      upcomingCountEl.textContent = upcomingTasks.length;
+      upcomingCountEl.style.display = "inline-block";
+    } else {
+      upcomingCountEl.style.display = "none";
+    }
+  }
+}
+
+// Poll for counter updates
+setInterval(updateTaskCounterBadges, 2000);

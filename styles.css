@@ -669,12 +669,44 @@ body {
   justify-content: center;
 }
 
-.sticky-note:hover .delete-btn {
+.sticky-note:hover .delete-btn,
+.sticky-note:hover .sticky-delete {
   opacity: 1;
 }
 
-.delete-btn:hover {
+.delete-btn:hover,
+.sticky-delete:hover {
   background: #c82333;
+}
+
+.sticky-delete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.upcoming-checkbox,
+.calendar-checkbox {
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: #0066cc;
 }
 
 /* ===== LISTS VIEW STYLES ===== */
@@ -1667,6 +1699,366 @@ body {
   justify-content: center;
 }
 
+/* ===== QUICK ADD MODAL IMPROVEMENTS ===== */
+
+.quick-add-modal-content {
+  padding: 8px 0;
+}
+
+.quick-add-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.quick-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #ffffff;
+  border: 1px solid #e6eef9;
+  padding: 16px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+  text-align: left;
+}
+
+.quick-add-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(2, 56, 120, 0.12);
+  border-color: #0066cc;
+}
+
+.quick-add-icon {
+  font-size: 22px;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: #f0f8ff;
+  color: #0366d6;
+  flex-shrink: 0;
+}
+
+/* ===== STICKY WALL IMPROVEMENTS ===== */
+
+.sticky-wall {
+  grid-template-columns: repeat(auto-fill, minmax(240px, 280px));
+  gap: 16px;
+}
+
+.sticky-note {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+}
+
+.sticky-note:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-3px);
+}
+
+.sticky-delete {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  z-index: 10;
+}
+
+.sticky-note:hover .sticky-delete {
+  opacity: 1;
+}
+
+.sticky-delete:hover {
+  background: #cc0000;
+  transform: scale(1.1);
+}
+
+/* ===== RECENT NOTES IN DASHBOARD ===== */
+
+.recent-note {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.recent-note:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* ===== UI IMPROVEMENTS: Quick Add, Upcoming, Calendar, Sticky Wall ===== */
+
+/* Quick Add modal content styling - larger touch targets and clearer icons */
+.quick-add-modal-content {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.quick-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #ffffff;
+  border: 1px solid #e6eef9;
+  padding: 14px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  font-weight: 600;
+}
+
+.quick-add-btn:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 18px rgba(2, 56, 120, 0.08);
+}
+
+.quick-add-icon {
+  font-size: 22px;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #f0f8ff;
+  color: #0366d6;
+}
+
+/* Upcoming UI polish */
+.upcoming-date-group {
+  margin-bottom: 18px;
+}
+
+.upcoming-date-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f3f7fb;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  border: 1px solid #e6eef9;
+}
+
+.upcoming-date {
+  font-weight: 700;
+  color: #03396c;
+}
+
+.upcoming-task-count {
+  background: #e9f3ff;
+  color: #0366d6;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.upcoming-items {
+  display: grid;
+  gap: 12px;
+}
+
+.upcoming-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  border: 1px solid #eef6ff;
+}
+
+.upcoming-item-left {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  width: auto;
+  min-width: 80px;
+}
+
+.upcoming-type-badge {
+  padding: 6px 10px;
+  border-radius: 18px;
+  text-transform: capitalize;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.upcoming-type-badge.work {
+  background: #e6f7ff;
+  color: #0077c2;
+}
+
+.upcoming-type-badge.personal {
+  background: #fff0f6;
+  color: #c2185b;
+}
+
+.upcoming-item-content {
+  flex: 1;
+}
+
+.upcoming-item-title {
+  margin: 0 0 6px 0;
+  font-size: 15px;
+}
+
+.upcoming-item-description {
+  margin: 0 0 8px 0;
+  color: #666;
+  font-size: 13px;
+}
+
+.upcoming-item-meta {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: #888;
+  font-size: 13px;
+}
+
+.upcoming-item-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.icon-btn {
+  background: none;
+  border: 1px solid transparent;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.icon-btn:hover {
+  background: #f0f8ff;
+  transform: translateY(-2px);
+}
+
+/* Calendar UI improvements */
+.calendar-grid td {
+  min-height: 110px;
+  padding: 10px;
+  vertical-align: top;
+}
+
+.calendar-day-number {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 12px;
+  color: #444;
+  font-weight: 700;
+}
+
+.calendar-grid td .calendar-events {
+  margin-top: 22px;
+  max-height: 68px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.calendar-grid td.more-events {
+  font-size: 11px;
+  color: #0366d6;
+  cursor: pointer;
+}
+
+.calendar-legend {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.legend-item {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 13px;
+  color: #666;
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+/* Sticky wall UI improvements */
+.sticky-wall {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+.sticky-note {
+  padding: 18px;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.note-tags {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.note-tag-pill {
+  background: rgba(0, 0, 0, 0.06);
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: #333;
+}
+
+.add-btn.add-note-btn {
+  background: #0066cc;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+}
+
+.add-btn.add-note-btn:hover {
+  background: #0052a3;
+}
+
+@media (max-width: 768px) {
+  .quick-add-modal-content {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-grid td {
+    min-height: 80px;
+  }
+}
+
 .modal.active {
   display: flex;
 }
@@ -1808,5 +2200,13 @@ body {
 
   .action-buttons {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .quick-add-buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .sticky-wall {
+    grid-template-columns: 1fr;
   }
 }
