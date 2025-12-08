@@ -1,111 +1,76 @@
 // ===== SHARED UTILITIES FOR ALL PAGES =====
-// Common functions for data management, formatting, and modal handling
+// Common functions for data management, formatting, and modal handling (MySQL API)
 
-// ===== LOCALSTORAGE MANAGEMENT =====
+const API_BASE = "http://localhost:4000/api";
 
 /**
- * Retrieve data from localStorage with error handling
- * @param {string} key - The localStorage key
- * @param {*} defaultValue - Default value if key doesn't exist
- * @returns {*} Parsed data or default value
+ * Synchronous HTTP request helper (keeps existing synchronous flows)
+ * @param {string} method
+ * @param {string} url
+ * @param {Object|null} body
+ * @returns {any} parsed JSON or null
  */
-function getData(key, defaultValue = []) {
+function requestSync(method, url, body = null) {
+  const xhr = new XMLHttpRequest();
+  xhr.open(method, url, false); // synchronous request to preserve existing code paths
+  xhr.setRequestHeader("Content-Type", "application/json");
   try {
-    const data = localStorage.getItem(key);
-    return data ? JSON.parse(data) : defaultValue;
-  } catch (error) {
-    console.error(`Error reading localStorage key "${key}":`, error);
-    return defaultValue;
+    xhr.send(body ? JSON.stringify(body) : null);
+    if (xhr.status >= 200 && xhr.status < 300) {
+      return xhr.responseText ? JSON.parse(xhr.responseText) : null;
+    } else {
+      console.error("API error", xhr.status, xhr.responseText);
+      showError("Server error. Please try again.");
+      return null;
+    }
+  } catch (err) {
+    console.error("Network error", err);
+    showError("Cannot reach server. Please check backend.");
+    return null;
   }
 }
 
-/**
- * Save data to localStorage with error handling
- * @param {string} key - The localStorage key
- * @param {*} data - Data to save (will be stringified)
- * @returns {boolean} True if successful, false otherwise
- */
-function saveData(key, data) {
-  try {
-    localStorage.setItem(key, JSON.stringify(data));
-    // Dispatch custom event to notify other pages of changes
-    window.dispatchEvent(new CustomEvent("dataUpdated", { detail: { key } }));
-    return true;
-  } catch (error) {
-    console.error(`Error saving localStorage key "${key}":`, error);
-    showError("Failed to save data. Please try again.");
-    return false;
-  }
+function dispatchDataUpdated(key) {
+  window.dispatchEvent(new CustomEvent("dataUpdated", { detail: { key } }));
 }
 
-// ===== DATA MANAGEMENT FUNCTIONS =====
+// ===== DATA MANAGEMENT FUNCTIONS (API) =====
 
-/**
- * Get all tasks from localStorage
- * @returns {Array} Array of task objects
- */
 function getTasks() {
-  return getData("tasks", []);
+  return requestSync("GET", `${API_BASE}/tasks`) || [];
 }
 
-/**
- * Save all tasks to localStorage
- * @param {Array} tasks - Array of task objects
- * @returns {boolean} True if successful
- */
 function saveTasks(tasks) {
-  return saveData("tasks", tasks);
+  // Not used directly; operations go through add/update/delete
+  dispatchDataUpdated("tasks");
+  return true;
 }
 
-/**
- * Get all notes from localStorage
- * @returns {Array} Array of note objects
- */
 function getNotes() {
-  return getData("notes", []);
+  return requestSync("GET", `${API_BASE}/notes`) || [];
 }
 
-/**
- * Save all notes to localStorage
- * @param {Array} notes - Array of note objects
- * @returns {boolean} True if successful
- */
 function saveNotes(notes) {
-  return saveData("notes", notes);
+  dispatchDataUpdated("notes");
+  return true;
 }
 
-/**
- * Get all lists from localStorage
- * @returns {Array} Array of list objects
- */
 function getLists() {
-  return getData("lists", []);
+  return requestSync("GET", `${API_BASE}/lists`) || [];
 }
 
-/**
- * Save all lists to localStorage
- * @param {Array} lists - Array of list objects
- * @returns {boolean} True if successful
- */
 function saveLists(lists) {
-  return saveData("lists", lists);
+  dispatchDataUpdated("lists");
+  return true;
 }
 
-/**
- * Get all tags from localStorage
- * @returns {Array} Array of tag objects
- */
 function getTags() {
-  return getData("tags", []);
+  return requestSync("GET", `${API_BASE}/tags`) || [];
 }
 
-/**
- * Save all tags to localStorage
- * @param {Array} tags - Array of tag objects
- * @returns {boolean} True if successful
- */
 function saveTags(tags) {
-  return saveData("tags", tags);
+  dispatchDataUpdated("tags");
+  return true;
 }
 
 // ===== TASK MANAGEMENT FUNCTIONS =====
@@ -138,9 +103,9 @@ function createTask(title, date, options = {}) {
  * @returns {boolean} True if successful
  */
 function addTask(task) {
-  const tasks = getTasks();
-  tasks.push(task);
-  return saveTasks(tasks);
+  const created = requestSync("POST", `${API_BASE}/tasks`, task);
+  if (created) dispatchDataUpdated("tasks");
+  return !!created;
 }
 
 /**
@@ -150,14 +115,13 @@ function addTask(task) {
  * @returns {boolean} True if successful
  */
 function updateTask(taskId, updates) {
-  const tasks = getTasks();
-  const taskIndex = tasks.findIndex((t) => t.id === taskId);
-  if (taskIndex === -1) {
+  const updated = requestSync("PUT", `${API_BASE}/tasks/${taskId}`, updates);
+  if (!updated) {
     showError("Task not found");
     return false;
   }
-  tasks[taskIndex] = { ...tasks[taskIndex], ...updates };
-  return saveTasks(tasks);
+  dispatchDataUpdated("tasks");
+  return true;
 }
 
 /**
@@ -166,9 +130,9 @@ function updateTask(taskId, updates) {
  * @returns {boolean} True if successful
  */
 function deleteTask(taskId) {
-  const tasks = getTasks();
-  const filtered = tasks.filter((t) => t.id !== taskId);
-  return saveTasks(filtered);
+  const res = requestSync("DELETE", `${API_BASE}/tasks/${taskId}`);
+  dispatchDataUpdated("tasks");
+  return res !== null || res === null; // DELETE returns null; still success
 }
 
 /**
@@ -207,9 +171,9 @@ function createNote(title, content, options = {}) {
  * @returns {boolean} True if successful
  */
 function addNote(note) {
-  const notes = getNotes();
-  notes.push(note);
-  return saveNotes(notes);
+  const created = requestSync("POST", `${API_BASE}/notes`, note);
+  if (created) dispatchDataUpdated("notes");
+  return !!created;
 }
 
 /**
@@ -219,14 +183,13 @@ function addNote(note) {
  * @returns {boolean} True if successful
  */
 function updateNote(noteId, updates) {
-  const notes = getNotes();
-  const noteIndex = notes.findIndex((n) => n.id === noteId);
-  if (noteIndex === -1) {
+  const updated = requestSync("PUT", `${API_BASE}/notes/${noteId}`, updates);
+  if (!updated) {
     showError("Note not found");
     return false;
   }
-  notes[noteIndex] = { ...notes[noteIndex], ...updates };
-  return saveNotes(notes);
+  dispatchDataUpdated("notes");
+  return true;
 }
 
 /**
@@ -235,9 +198,9 @@ function updateNote(noteId, updates) {
  * @returns {boolean} True if successful
  */
 function deleteNote(noteId) {
-  const notes = getNotes();
-  const filtered = notes.filter((n) => n.id !== noteId);
-  return saveNotes(filtered);
+  const res = requestSync("DELETE", `${API_BASE}/notes/${noteId}`);
+  dispatchDataUpdated("notes");
+  return res !== null || res === null;
 }
 
 /**
@@ -274,9 +237,9 @@ function createList(name, options = {}) {
  * @returns {boolean} True if successful
  */
 function addList(list) {
-  const lists = getLists();
-  lists.push(list);
-  return saveLists(lists);
+  const created = requestSync("POST", `${API_BASE}/lists`, list);
+  if (created) dispatchDataUpdated("lists");
+  return !!created;
 }
 
 /**
@@ -286,14 +249,13 @@ function addList(list) {
  * @returns {boolean} True if successful
  */
 function updateList(listId, updates) {
-  const lists = getLists();
-  const listIndex = lists.findIndex((l) => l.id === listId);
-  if (listIndex === -1) {
+  const updated = requestSync("PUT", `${API_BASE}/lists/${listId}`, updates);
+  if (!updated) {
     showError("List not found");
     return false;
   }
-  lists[listIndex] = { ...lists[listIndex], ...updates };
-  return saveLists(lists);
+  dispatchDataUpdated("lists");
+  return true;
 }
 
 /**
@@ -302,9 +264,9 @@ function updateList(listId, updates) {
  * @returns {boolean} True if successful
  */
 function deleteList(listId) {
-  const lists = getLists();
-  const filtered = lists.filter((l) => l.id !== listId);
-  return saveLists(filtered);
+  const res = requestSync("DELETE", `${API_BASE}/lists/${listId}`);
+  dispatchDataUpdated("lists");
+  return res !== null || res === null;
 }
 
 /**
@@ -351,9 +313,9 @@ function createTag(name, options = {}) {
  * @returns {boolean} True if successful
  */
 function addTag(tag) {
-  const tags = getTags();
-  tags.push(tag);
-  return saveTags(tags);
+  const created = requestSync("POST", `${API_BASE}/tags`, tag);
+  if (created) dispatchDataUpdated("tags");
+  return !!created;
 }
 
 /**
@@ -362,9 +324,9 @@ function addTag(tag) {
  * @returns {boolean} True if successful
  */
 function deleteTag(tagId) {
-  const tags = getTags();
-  const filtered = tags.filter((t) => t.id !== tagId);
-  return saveTags(filtered);
+  const res = requestSync("DELETE", `${API_BASE}/tags/${tagId}`);
+  dispatchDataUpdated("tags");
+  return res !== null || res === null;
 }
 
 /**
@@ -615,7 +577,7 @@ function createModal(options = {}) {
   } = options;
 
   const modal = document.createElement("div");
-  modal.className = "modal";
+  modal.className = "modal dynamic-modal";
   modal.innerHTML = `
     <div class="modal-content">
       <div class="modal-header">
@@ -629,7 +591,11 @@ function createModal(options = {}) {
   `;
 
   const closeBtn = modal.querySelector(".close-btn");
-  closeBtn.onclick = () => closeModal(modal, onClose);
+  closeBtn.onclick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeModal(modal, onClose);
+  };
 
   if (closeOnBackground) {
     modal.onclick = (e) => {
@@ -662,7 +628,14 @@ function createModal(options = {}) {
 function closeModal(modal, onClose = () => {}) {
   if (modal) {
     modal.classList.remove("active");
-    setTimeout(() => modal.remove(), 300);
+    // Only remove if it's a dynamically created modal
+    if (modal.classList.contains("dynamic-modal")) {
+      setTimeout(() => {
+        if (modal && modal.parentElement) {
+          modal.remove();
+        }
+      }, 300);
+    }
   }
   onClose();
 }

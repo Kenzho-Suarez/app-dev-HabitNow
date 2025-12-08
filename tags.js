@@ -366,9 +366,3 @@ function updateTaskCounterBadges() {
 // Poll for counter updates
 setInterval(updateTaskCounterBadges, 2000);
 
-// Initialize event listeners on load
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", setupTagsEventListeners);
-} else {
-  setupTagsEventListeners();
-}

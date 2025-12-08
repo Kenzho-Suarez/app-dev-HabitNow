@@ -4,6 +4,7 @@
 let currentDate = new Date();
 let currentEventId = null;
 let selectedDate = null;
+let currentEventTags = [];
 
 // ===== INITIALIZATION =====
 
@@ -97,7 +98,7 @@ function renderCalendar() {
             const completedStyle = task.completed
               ? "text-decoration: line-through; opacity: 0.6;"
               : "";
-            html += `<div class="calendar-event ${task.type}" onclick="event.stopPropagation(); viewEvent('${task.id}')" style="${completedStyle}">${task.title}</div>`;
+            html += `<div class="calendar-event ${task.type}" onclick="event.stopPropagation(); viewEvent('${task.id}')" title="${task.title}" style="${completedStyle}">${task.title}</div>`;
           });
           if (dayTasks.length > 2) {
             html += `<div class="more-events" onclick="event.stopPropagation(); showAllEvents('${dateStr}')">+${
@@ -138,6 +139,7 @@ function changeMonth(delta) {
  */
 function openAddModal() {
   currentEventId = null;
+  currentEventTags = [];
   const modalTitle = document.getElementById("modal-title");
   if (modalTitle) modalTitle.textContent = "Add Event";
 
@@ -148,6 +150,9 @@ function openAddModal() {
   if (eventDate) {
     eventDate.value = getTodayDate();
   }
+
+  renderEventTags();
+  populateTagSelect();
 
   const deleteBtn = document.getElementById("delete-btn");
   if (deleteBtn) deleteBtn.style.display = "none";
@@ -163,6 +168,7 @@ function openAddModal() {
 function openAddModalForDate(dateStr) {
   selectedDate = dateStr;
   currentEventId = null;
+  currentEventTags = [];
   const modalTitle = document.getElementById("modal-title");
   if (modalTitle) modalTitle.textContent = "Add Event";
 
@@ -171,6 +177,9 @@ function openAddModalForDate(dateStr) {
 
   const eventDate = document.getElementById("event-date");
   if (eventDate) eventDate.value = dateStr;
+
+  renderEventTags();
+  populateTagSelect();
 
   const deleteBtn = document.getElementById("delete-btn");
   if (deleteBtn) deleteBtn.style.display = "none";
@@ -251,6 +260,11 @@ function editEventFromView() {
   const eventType = document.getElementById("event-type");
   if (eventType) eventType.value = task.type;
 
+  // Load tags
+  currentEventTags = task.tags || [];
+  renderEventTags();
+  populateTagSelect();
+
   const deleteBtn = document.getElementById("delete-btn");
   if (deleteBtn) deleteBtn.style.display = "block";
 
@@ -290,6 +304,7 @@ function saveEvent(e) {
       date,
       time,
       type,
+      tags: currentEventTags,
     });
     showSuccess("Event updated successfully");
   } else {
@@ -298,6 +313,7 @@ function saveEvent(e) {
       description,
       time,
       type,
+      tags: currentEventTags,
     });
     addTask(newTask);
     showSuccess("Event created");
@@ -438,6 +454,68 @@ function deleteCalendarEventFromList(taskId) {
 // ===== EVENT LISTENERS =====
 
 /**
+ * Populate tag select dropdown with available tags
+ */
+function populateTagSelect() {
+  const tagSelect = document.getElementById("event-tag-select");
+  if (!tagSelect) return;
+
+  const allTags = getTags();
+  let options = '<option value="">+ Add a tag</option>';
+  allTags.forEach((tag) => {
+    options += `<option value="${tag.id}">${tag.name}</option>`;
+  });
+  tagSelect.innerHTML = options;
+
+  // Add change listener
+  tagSelect.onchange = (e) => {
+    const tagId = e.target.value;
+    if (tagId && !currentEventTags.includes(tagId)) {
+      currentEventTags.push(tagId);
+      renderEventTags();
+      populateTagSelect();
+    }
+  };
+}
+
+/**
+ * Render selected tags in the form
+ */
+function renderEventTags() {
+  const tagsList = document.getElementById("event-tags-list");
+  if (!tagsList) return;
+
+  if (currentEventTags.length === 0) {
+    tagsList.innerHTML = "";
+    return;
+  }
+
+  let html = "";
+  currentEventTags.forEach((tagId) => {
+    const tag = getTag(tagId);
+    if (tag) {
+      html += `
+        <span class="event-tag-pill">
+          #${tag.name}
+          <button type="button" onclick="removeEventTag('${tagId}')" style="background: none; border: none; color: inherit; cursor: pointer; margin-left: 5px; font-size: 12px;">×</button>
+        </span>
+      `;
+    }
+  });
+  tagsList.innerHTML = html;
+}
+
+/**
+ * Remove a tag from current event
+ * @param {string} tagId - Tag ID to remove
+ */
+function removeEventTag(tagId) {
+  currentEventTags = currentEventTags.filter((id) => id !== tagId);
+  renderEventTags();
+  populateTagSelect();
+}
+
+/**
  * Setup calendar event listeners
  */
 function setupCalendarEventListeners() {
@@ -446,31 +524,36 @@ function setupCalendarEventListeners() {
     addBtn.onclick = openAddModal;
   }
 
-  // Handle modal close with ESC key
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      closeModal();
-      closeViewModal();
-    }
-  });
+  // Handle modal close with ESC key (only once)
+  if (!window.calendarEscListenerAdded) {
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        closeModal();
+        closeViewModal();
+      }
+    });
+    window.calendarEscListenerAdded = true;
+  }
 
-  // Close modal when clicking background
+  // Close modal when clicking background (setup only once per modal)
   const eventModal = document.getElementById("event-modal");
-  if (eventModal) {
+  if (eventModal && !eventModal.dataset.listenerAdded) {
     eventModal.addEventListener("click", (e) => {
       if (e.target === eventModal) {
         closeModal();
       }
     });
+    eventModal.dataset.listenerAdded = "true";
   }
 
   const viewModal = document.getElementById("view-modal");
-  if (viewModal) {
+  if (viewModal && !viewModal.dataset.listenerAdded) {
     viewModal.addEventListener("click", (e) => {
       if (e.target === viewModal) {
         closeViewModal();
       }
     });
+    viewModal.dataset.listenerAdded = "true";
   }
 }
 
@@ -507,5 +590,8 @@ function updateTaskCounterBadges() {
   }
 }
 
-// Poll for counter updates
-setInterval(updateTaskCounterBadges, 2000);
+// Poll for counter updates (prevent multiple intervals)
+if (!window.calendarCounterPolling) {
+  setInterval(updateTaskCounterBadges, 2000);
+  window.calendarCounterPolling = true;
+}

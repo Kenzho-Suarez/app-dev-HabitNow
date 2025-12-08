@@ -514,12 +514,9 @@ function updateTaskCounterBadges() {
   }
 }
 
-// Poll for counter updates
-setInterval(updateTaskCounterBadges, 2000);
-
-// Initialize event listeners on load
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", setupUpcomingEventListeners);
-} else {
-  setupUpcomingEventListeners();
+// Poll for counter updates (prevent multiple intervals)
+if (!window.upcomingCounterPolling) {
+  setInterval(updateTaskCounterBadges, 2000);
+  window.upcomingCounterPolling = true;
 }
+

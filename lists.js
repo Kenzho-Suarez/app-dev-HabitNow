@@ -449,8 +449,8 @@ function setupListsEventListeners() {
 function updateTaskCounterBadges() {
   const tasks = getTasks();
 
-  // Update today count
-  const todayTasks = tasks.filter((t) => isToday(t.date));
+  // Update today count (uncompleted only)
+  const todayTasks = tasks.filter((t) => isToday(t.date) && !t.completed);
   const todayCountEl = document.getElementById("today-count");
   if (todayCountEl) {
     if (todayTasks.length > 0) {
@@ -476,10 +476,3 @@ function updateTaskCounterBadges() {
 
 // Poll for counter updates
 setInterval(updateTaskCounterBadges, 2000);
-
-// Initialize event listeners on load
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", setupListsEventListeners);
-} else {
-  setupListsEventListeners();
-}

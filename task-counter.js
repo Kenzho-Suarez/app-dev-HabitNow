@@ -3,20 +3,19 @@
 // Polls every 2 seconds to keep counts in sync across all pages
 
 /**
- * Update task counter badges from localStorage
+ * Update task counter badges from API (via shared-utils getTasks)
  */
 function updateTaskCounts() {
   try {
-    // Load data from localStorage
-    const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+    const tasks = getTasks() || [];
 
     // Get today's date in consistent format
     const today = new Date().toISOString().split("T")[0];
 
-    // Count today's tasks
+    // Count uncompleted today's tasks
     const todayTasks = tasks.filter((t) => {
       const taskDate = new Date(t.date).toISOString().split("T")[0];
-      return taskDate === today;
+      return taskDate === today && !t.completed;
     });
 
     // Count uncompleted future tasks (upcoming)
@@ -57,9 +56,9 @@ document.addEventListener("DOMContentLoaded", updateTaskCounts);
 // Update counts periodically (every 2 seconds) to sync across all pages
 setInterval(updateTaskCounts, 2000);
 
-// Also update when storage changes (from other tabs/windows)
-window.addEventListener("storage", (e) => {
-  if (e.key === "tasks") {
+// Also update when dataUpdated events fire (from other pages)
+window.addEventListener("dataUpdated", (e) => {
+  if (e.detail?.key === "tasks") {
     updateTaskCounts();
   }
 });

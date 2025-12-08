@@ -449,5 +449,8 @@ function updateTaskCounterBadges() {
   }
 }
 
-// Poll for counter updates
-setInterval(updateTaskCounterBadges, 2000);
+// Poll for counter updates (prevent multiple intervals)
+if (!window.todayCounterPolling) {
+  setInterval(updateTaskCounterBadges, 2000);
+  window.todayCounterPolling = true;
+}
