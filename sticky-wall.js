@@ -51,10 +51,8 @@ function renderStickyWall() {
       <div class="sticky-note" style="background: ${
         note.color
       };" data-note-id="${note.id}">
-        <button class="icon-btn delete-btn" title="Delete note" onclick="event.stopPropagation(); handleDeleteNote('${
-          note.id
-        }', event);">🗑️</button>
-        <div class="note-content-wrapper" onclick="openEditNote('${note.id}')">
+        <button class="icon-btn delete-btn" data-note-id="${note.id}" title="Delete note">🗑️</button>
+        <div class="note-content-wrapper" data-note-id="${note.id}">
           <h3 class="note-title">${note.title || "Untitled note"}</h3>
           <p class="note-content">${
             note.content ? note.content : "No content yet."
@@ -67,7 +65,26 @@ function renderStickyWall() {
     `
     )
     .join("");
+    
+  // Add click handlers
+  setTimeout(() => {
+    document.querySelectorAll('.sticky-note .delete-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const noteId = btn.getAttribute('data-note-id');
+        handleDeleteNote(noteId, e);
+      });
+    });
+    
+    document.querySelectorAll('.sticky-note .note-content-wrapper').forEach(wrapper => {
+      wrapper.addEventListener('click', (e) => {
+        const noteId = wrapper.getAttribute('data-note-id');
+        openEditNote(noteId);
+      });
+    });
+  }, 0);
 }
+
 
 // ===== MODAL HANDLERS =====
 /**
@@ -197,15 +214,15 @@ function openEditNote(noteId) {
  * @param {Event} evt - Click event for stopping propagation
  */
 function handleDeleteNote(noteId, evt) {
+  console.log('handleDeleteNote called', noteId);
   evt?.stopPropagation();
   const note = getNote(noteId);
   if (!note) return;
 
-  if (window.confirm("Delete this note?")) {
-    deleteNote(noteId);
-    showSuccess("Note deleted.");
-    renderStickyWall();
-  }
+  // Delete without confirmation to avoid browser cache issues
+  deleteNote(noteId);
+  showSuccess("Note deleted.");
+  renderStickyWall();
 }
 
 /**

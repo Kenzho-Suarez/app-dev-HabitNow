@@ -230,17 +230,38 @@ function viewEvent(id) {
   const eventDetails = document.getElementById("event-details");
   if (eventDetails) eventDetails.innerHTML = html;
 
+  // Show the bottom action buttons when viewing a single event
   const viewModal = document.getElementById("view-modal");
-  if (viewModal) viewModal.classList.add("active");
+  if (viewModal) {
+    viewModal.classList.add("active");
+    // Show the form-buttons div
+    const formButtons = viewModal.querySelector(".form-buttons");
+    if (formButtons) {
+      formButtons.style.display = "";  // Reset to default CSS (flex)
+    }
+  }
 }
 
 /**
  * Edit event from view modal
  */
 function editEventFromView() {
+  console.log('editEventFromView called', currentEventId);
+  
+  // Save the event ID BEFORE closing the modal (which clears currentEventId)
+  const eventIdToEdit = currentEventId;
+  
+  const task = getTask(eventIdToEdit);
+  if (!task) {
+    console.log('Task not found for id:', eventIdToEdit);
+    return;
+  }
+  
+  console.log('Closing view modal and opening edit modal');
   closeViewModal();
-  const task = getTask(currentEventId);
-  if (!task) return;
+  
+  // Restore the event ID after closing
+  currentEventId = eventIdToEdit;
 
   const modalTitle = document.getElementById("modal-title");
   if (modalTitle) modalTitle.textContent = "Edit Event";
@@ -269,7 +290,12 @@ function editEventFromView() {
   if (deleteBtn) deleteBtn.style.display = "block";
 
   const eventModal = document.getElementById("event-modal");
-  if (eventModal) eventModal.classList.add("active");
+  if (eventModal) {
+    console.log('Opening edit modal');
+    eventModal.classList.add("active");
+  } else {
+    console.log('Edit modal element not found!');
+  }
 }
 
 /**
@@ -344,28 +370,31 @@ function toggleCalendarTaskCompletion(taskId) {
 function deleteEvent() {
   if (!currentEventId) return;
 
-  if (window.confirm("Are you sure you want to delete this event?")) {
-    deleteTask(currentEventId);
-    showSuccess("Event deleted");
-    closeModal();
-    renderCalendar();
-    updateTaskCounterBadges();
-  }
+  // Delete without confirmation to avoid browser cache issues
+  deleteTask(currentEventId);
+  showSuccess("Event deleted");
+  closeModal();
+  renderCalendar();
+  updateTaskCounterBadges();
 }
 
 /**
  * Delete event from view modal
  */
 function deleteEventFromView() {
-  if (!currentEventId) return;
-
-  if (window.confirm("Are you sure you want to delete this event?")) {
-    deleteTask(currentEventId);
-    showSuccess("Event deleted");
-    closeViewModal();
-    renderCalendar();
-    updateTaskCounterBadges();
+  console.log('deleteEventFromView called', currentEventId);
+  if (!currentEventId) {
+    console.log('No currentEventId');
+    return;
   }
+
+  // Delete without confirmation to avoid browser cache issues
+  console.log('About to delete task:', currentEventId);
+  deleteTask(currentEventId);
+  showSuccess("Event deleted");
+  closeViewModal();
+  renderCalendar();
+  updateTaskCounterBadges();
 }
 
 /**
@@ -428,8 +457,14 @@ function showAllEvents(dateStr) {
   const eventDetails = document.getElementById("event-details");
   if (eventDetails) eventDetails.innerHTML = html;
 
+  // Hide the bottom action buttons when showing multiple events
   const viewModal = document.getElementById("view-modal");
-  if (viewModal) viewModal.classList.add("active");
+  if (viewModal) {
+    viewModal.classList.add("active");
+    // Hide the form-buttons div
+    const formButtons = viewModal.querySelector(".form-buttons");
+    if (formButtons) formButtons.style.display = "none";
+  }
 }
 
 /**
@@ -595,3 +630,18 @@ if (!window.calendarCounterPolling) {
   setInterval(updateTaskCounterBadges, 2000);
   window.calendarCounterPolling = true;
 }
+
+// Expose functions to global scope for onclick handlers
+window.changeMonth = changeMonth;
+window.openAddModal = openAddModal;
+window.openAddModalForDate = openAddModalForDate;
+window.viewEvent = viewEvent;
+window.editEventFromView = editEventFromView;
+window.deleteEventFromView = deleteEventFromView;
+window.saveEvent = saveEvent;
+window.deleteEvent = deleteEvent;
+window.closeModal = closeModal;
+window.closeViewModal = closeViewModal;
+window.toggleCalendarTaskCompletion = toggleCalendarTaskCompletion;
+window.showAllEvents = showAllEvents;
+window.removeEventTag = removeEventTag;

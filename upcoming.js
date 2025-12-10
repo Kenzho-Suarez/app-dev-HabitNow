@@ -27,7 +27,9 @@ window.addEventListener("dataUpdated", (e) => {
  */
 function renderUpcomingPage() {
   const tasks = getTasks();
-  const upcomingTasks = tasks.filter((t) => isFuture(t.date) && !t.completed);
+  const today = getTodayDate();
+  // Show tasks from today onwards that are not completed
+  const upcomingTasks = tasks.filter((t) => t.date >= today && !t.completed);
 
   // Sort by date
   const sortedTasks = sortTasksByDate(upcomingTasks);

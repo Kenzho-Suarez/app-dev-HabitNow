@@ -117,7 +117,7 @@ app.delete("/api/notes/:id", async (req, res) => {
 // ===== TASKS =====
 app.get("/api/tasks", async (_req, res) => {
   const [rows] = await pool.query(
-    "SELECT id, title, description, date, time, type, completed, created_at, list_id FROM tasks WHERE is_deleted = 0 ORDER BY date ASC, time ASC"
+    "SELECT id, title, description, date, time, type, completed, created_at, list_id FROM tasks ORDER BY date ASC, time ASC"
   );
   res.json(rows.map(mapTask));
 });
@@ -143,20 +143,42 @@ app.post("/api/tasks", async (req, res) => {
 app.put("/api/tasks/:id", async (req, res) => {
   const { id } = req.params;
   const { title, description, date, time, type, completed, listId } = req.body;
+  
+  // First, get the existing task to fill in missing values
+  const [existing] = await pool.query("SELECT * FROM tasks WHERE id=?", [id]);
+  if (existing.length === 0) return res.status(404).send("Not found");
+  
+  const task = existing[0];
+  
+  // Use existing values if new values are not provided
+  const updatedTitle = title !== undefined ? title : task.title;
+  const updatedDescription = description !== undefined ? description : task.description;
+  const updatedDate = date !== undefined ? date : task.date;
+  const updatedTime = time !== undefined ? time : task.time;
+  const updatedType = type !== undefined ? type : task.type;
+  const updatedCompleted = completed !== undefined ? (completed ? 1 : 0) : task.completed;
+  const updatedListId = listId !== undefined ? listId : task.list_id;
+  
   await pool.query(
     "UPDATE tasks SET title=?, description=?, date=?, time=?, type=?, completed=?, list_id=? WHERE id=?",
-    [title, description, date, time, type, completed ? 1 : 0, listId, id]
+    [updatedTitle, updatedDescription, updatedDate, updatedTime, updatedType, updatedCompleted, updatedListId, id]
   );
-  const task = mapTask(await fetchOne("tasks", id));
-  if (!task) return res.status(404).send("Not found");
-  res.json(task);
+  const updatedTask = mapTask(await fetchOne("tasks", id));
+  if (!updatedTask) return res.status(404).send("Not found");
+  res.json(updatedTask);
 });
 
 app.delete("/api/tasks/:id", async (req, res) => {
   const { id } = req.params;
-  // Soft delete to avoid orphaned relations; requires is_deleted column
-  await pool.query("UPDATE tasks SET is_deleted = 1 WHERE id=?", [id]);
+  // Hard delete - actually remove from database
+  await pool.query("DELETE FROM tasks WHERE id=?", [id]);
   res.status(204).send();
+});
+
+// Admin endpoint to clear all tasks (for testing)
+app.delete("/api/tasks", async (req, res) => {
+  await pool.query("DELETE FROM tasks");
+  res.json({ message: "All tasks deleted" });
 });
 
 // ===== LISTS =====

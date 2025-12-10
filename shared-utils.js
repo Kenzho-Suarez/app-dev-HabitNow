@@ -640,15 +640,6 @@ function closeModal(modal, onClose = () => {}) {
   onClose();
 }
 
-/**
- * Confirm action with user
- * @param {string} message - Confirmation message
- * @returns {Promise<boolean>} True if user confirms
- */
-function confirm(message) {
-  return Promise.resolve(window.confirm(message));
-}
-
 // ===== SEARCH AND FILTER UTILITIES =====
 
 /**

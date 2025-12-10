@@ -14,14 +14,24 @@ function updateTaskCounts() {
 
     // Count uncompleted today's tasks
     const todayTasks = tasks.filter((t) => {
-      const taskDate = new Date(t.date).toISOString().split("T")[0];
-      return taskDate === today && !t.completed;
+      if (!t.date) return false; // Skip tasks without dates
+      try {
+        const taskDate = new Date(t.date).toISOString().split("T")[0];
+        return taskDate === today && !t.completed;
+      } catch (e) {
+        return false;
+      }
     });
 
     // Count uncompleted future tasks (upcoming)
     const upcomingTasks = tasks.filter((t) => {
-      const taskDate = new Date(t.date).toISOString().split("T")[0];
-      return taskDate > today && !t.completed;
+      if (!t.date) return false; // Skip tasks without dates
+      try {
+        const taskDate = new Date(t.date).toISOString().split("T")[0];
+        return taskDate > today && !t.completed;
+      } catch (e) {
+        return false;
+      }
     });
 
     // Update today count badge
@@ -53,8 +63,8 @@ function updateTaskCounts() {
 // Update counts when page loads
 document.addEventListener("DOMContentLoaded", updateTaskCounts);
 
-// Update counts periodically (every 2 seconds) to sync across all pages
-setInterval(updateTaskCounts, 2000);
+// Temporarily disable polling to prevent errors
+// setInterval(updateTaskCounts, 2000);
 
 // Also update when dataUpdated events fire (from other pages)
 window.addEventListener("dataUpdated", (e) => {

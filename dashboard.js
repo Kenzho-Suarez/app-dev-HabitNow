@@ -16,35 +16,40 @@ function updateDashboard() {
   // Tasks stats
   const today = getTodayDate();
   const todayTasks = tasks.filter((t) => isToday(t.date));
+  const uncompletedTasks = tasks.filter((t) => !t.completed);
   const completedTasks = tasks.filter((t) => t.completed);
   const upcomingTasks = tasks.filter((t) => !t.completed && isFuture(t.date));
+  const todayUncompleted = todayTasks.filter((t) => !t.completed);
 
-  // Update total tasks
+  // Update total tasks (only uncompleted)
   const totalTasksEl = document.getElementById("total-tasks");
-  if (totalTasksEl) totalTasksEl.textContent = tasks.length;
+  if (totalTasksEl) totalTasksEl.textContent = uncompletedTasks.length;
 
-  // Update completed tasks
+  // Update completed tasks (show total count across all time)
   const completedTasksEl = document.getElementById("completed-tasks");
   if (completedTasksEl) completedTasksEl.textContent = completedTasks.length;
 
-  // Update completion rate
+  // Update completion rate (based on ALL tasks including completed)
   const completionRateEl = document.getElementById("completion-rate");
   if (completionRateEl) {
-    if (tasks.length > 0) {
+    const allTasks = tasks.length;
+    if (allTasks > 0) {
       const completionRate = Math.round(
-        (completedTasks.length / tasks.length) * 100
+        (completedTasks.length / allTasks) * 100
       );
       completionRateEl.textContent = `${completionRate}% completion`;
     } else {
-      completionRateEl.textContent = "0% completion";
+      completionRateEl.textContent = "No tasks yet";
     }
   }
 
   // Update tasks change stat
   const tasksChangeEl = document.getElementById("tasks-change");
   if (tasksChangeEl) {
-    if (tasks.length > 0) {
-      tasksChangeEl.textContent = `${todayTasks.length} due today`;
+    if (todayUncompleted.length > 0) {
+      tasksChangeEl.textContent = `${todayUncompleted.length} due today`;
+    } else if (tasks.length > 0) {
+      tasksChangeEl.textContent = "All tasks completed today";
     } else {
       tasksChangeEl.textContent = "No tasks yet";
     }
